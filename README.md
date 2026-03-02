@@ -16,4 +16,4 @@ Get‑UDID Local là một ứng dụng iOS mẫu giúp trích xuất UDID của
 
 Custom by <a href="https://github.com/letienndat">me</a>
 <br>
-Thanks <a href="https://github.com/thanhdo1110/Get-UDID-Local">@thanhdo1110</a>
+Thanks <a href="https://github.com/thanhdo1110">@thanhdo1110</a> for <a href="https://github.com/thanhdo1110/Get-UDID-Local">Get-UDID-Local</a>

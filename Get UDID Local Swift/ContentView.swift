@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var localServer = LocalServer()
-
+    @StateObject private var localServer = LocalServer.shared
     @Environment(\.openURL) var openURL
     
     var body: some View {
@@ -68,18 +67,25 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
     
-                ScrollView {
-                    Text(localServer.log)
-                        .font(.custom("Menlo", size: 13))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 6)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        Text(localServer.log.joined(separator: "\n"))
+                            .font(.custom("Menlo", size: 13))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 6)
+                            .id("LOG_VIEW")
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.gray.opacity(0.15))
+                    )
+                    .onChange(of: localServer.log) { _ in
+                        withAnimation {
+                            proxy.scrollTo("LOG_VIEW", anchor: .bottom)
+                        }
+                    }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.15))
-                )
-                .scrollIndicators(.automatic)
             }
             .padding(.top, 60)
             Spacer()
@@ -87,9 +93,7 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .font(.system(size: 15))
         .alert("Profile Loading", isPresented: $localServer.isInstallingProfile) {
-            Button("OK", role: .cancel) {
-                localServer.isInstallingProfile = false
-            }
+            Button("OK", role: .cancel) {}
         } message: {
             Text("The configuration profile is being loaded in Safari. Please follow the iOS prompts to install it. The app will automatically receive device information after installation.")
         }

@@ -8,6 +8,7 @@
 import Foundation
 import Network
 import SwiftUICore
+import UIKit
 
 class LocalServer: ObservableObject {
     enum StatusServer: String {
@@ -39,6 +40,7 @@ class LocalServer: ObservableObject {
         case none
     }
 
+    static var shared = LocalServer()
     private var listener: NWListener?
     private(set) var ipAddress = "127.0.0.1"
     private(set) var port = NWEndpoint.Port(integerLiteral: 2511)
@@ -52,11 +54,14 @@ class LocalServer: ObservableObject {
         formatter.timeZone = TimeZone.current
         return formatter.string(from: Date())
     }
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
 
     @Published var isRunning = false
     @Published var statusServerMessage: StatusServer = .stopped
     @Published var isInstallingProfile = false
-    @Published var log = "Device information will appear here after installing the profile...\n"
+    @Published var log = ["Device information will appear here after installing the profile..."]
+
+    private init() {}
 
     func getPath(endpoint: EndpointServer) -> String {
         urlString + endpoint.rawValue
@@ -64,7 +69,7 @@ class LocalServer: ObservableObject {
 
     func appendLog(_ text: String) {
         DispatchQueue.main.async {
-            self.log.append(contentsOf: text + "\n")
+            self.log.append(text)
         }
     }
 
@@ -124,6 +129,27 @@ class LocalServer: ObservableObject {
         listener = nil
         isRunning = false
         statusServerMessage = .stopped
+    }
+
+    func appDidEnterBackground() {
+        guard isRunning, backgroundTask != .invalid else { return }
+        startBackgroundTask()
+    }
+
+    func appWillEnterForgeground() {
+        stopBackgroundTask()
+    }
+
+    private func startBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "LocalHTPPServer") {
+            self.stopBackgroundTask()
+        }
+    }
+    
+    private func stopBackgroundTask() {
+        guard backgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = .invalid
     }
 
     func test(completion: @escaping (Bool) -> ()) {
@@ -294,7 +320,7 @@ class LocalServer: ObservableObject {
     private func handleResponseSuccess(_ connection: NWConnection) {
         let responseString = """
             HTTP/1.1 301 Moved Permanently
-            Location: /success
+            Location: \(EndpointServer.success)
             Content-Length: 0
             Connection: close\r\n\r\n
             """

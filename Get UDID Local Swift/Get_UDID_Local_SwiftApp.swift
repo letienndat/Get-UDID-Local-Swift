@@ -9,9 +9,17 @@ import SwiftUI
 
 @main
 struct Get_UDID_Local_SwiftApp: App {
+    @StateObject private var localServer = LocalServer.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+                    localServer.appDidEnterBackground()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                    localServer.appWillEnterForgeground()
+                }
         }
     }
 }
